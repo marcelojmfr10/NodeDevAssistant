@@ -44,7 +44,7 @@ export interface SearchResult {
 
 export type ModelProvider = "anthropic" | "openai";
 
-export interface AppConfing {
+export interface AppConfig {
   provider: ModelProvider;
   anthropicApiKey: string;
   openaiApiKey: string;
@@ -53,7 +53,7 @@ export interface AppConfing {
   openaiEmbeddingModel: string;
   docsPath: string;
   dbPath: string;
-  rangTopK: number;
+  ragTopK: number;
 }
 
 export interface AgentResponse {
