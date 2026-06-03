@@ -1,7 +1,7 @@
 import { Anthropic } from "@anthropic-ai/sdk";
 import { config } from "../config.js";
 
-const client = new Anthropic({ apiKey: config.anthropicApiKey });
+export const client = new Anthropic({ apiKey: config.anthropicApiKey });
 
 export const askClaude = async (
   prompt: string,
@@ -26,5 +26,3 @@ export const askClaude = async (
 
   return textBlock.text;
 };
-
-export { client };
