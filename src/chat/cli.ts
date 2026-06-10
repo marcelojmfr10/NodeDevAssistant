@@ -7,6 +7,7 @@ import { resetStore } from "../rag/retriever.js";
 import { DevAssistantAgent } from "../agent/agent.js";
 import { ALL_TOOL_DEFINITIONS } from "../agent/tool-registry.js";
 import { checkGuardrails, createRateLimiter } from "../security/guardrails.js";
+import { calculateCost } from "../utils/cost-calculator.js";
 
 const ingestDocs = async (docsPath: string): Promise<void> => {
   console.log(`\nIniciando ingestión desde: ${docsPath}`);
@@ -68,10 +69,16 @@ export const startCLI = async () => {
 
       if (userInput === "/stats") {
         const stats = devAssistantAgent.getStats();
+        const sessionCost = calculateCost({
+          inputTokens: stats.inputTokens,
+          outputTokens: stats.outputTokens,
+          model: config.anthropicModel,
+        });
         console.log(`\n📊 Estadísticas de la conversación:`);
         console.log(`   • Turnos: ${stats.turns}`);
         console.log(`   • Tokens de entrada acumulados: ${stats.inputTokens}`);
         console.log(`   • Tokens de salida acumulados: ${stats.outputTokens}`);
+        console.log(`   • Costo estimado de sesión: ${sessionCost.formatted}`);
         console.log(
           `   • Tools Calls en úlitmo turno: ${stats.toolCallsLastTurn}`,
         );
@@ -82,9 +89,16 @@ export const startCLI = async () => {
 
       if (userInput === "/exit" || userInput === "/salida") {
         const stats = devAssistantAgent.getStats();
+        const sessionCost = calculateCost({
+          inputTokens: stats.inputTokens,
+          outputTokens: stats.outputTokens,
+          model: config.anthropicModel,
+        });
         console.log(`\n¡Hasta luego!`);
         console.log(
-          `Resumen: ${stats.turns} turnos ${stats.inputTokens} tokens de entrada ${stats.outputTokens} token de salidas`,
+          `Resumen: ${stats.turns} turnos ${stats.inputTokens} tokens de entrada 
+          ${stats.outputTokens} token de salidas
+          ${sessionCost.formatted} costo estimado`,
         );
         rl.close();
         return;
