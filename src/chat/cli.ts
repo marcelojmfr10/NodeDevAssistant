@@ -6,6 +6,7 @@ import config from "../config.js";
 import { resetStore } from "../rag/retriever.js";
 import { DevAssistantAgent } from "../agent/agent.js";
 import { ALL_TOOL_DEFINITIONS } from "../agent/tool-registry.js";
+import { checkGuardrails, createRateLimiter } from "../security/guardrails.js";
 
 const ingestDocs = async (docsPath: string): Promise<void> => {
   console.log(`\nIniciando ingestión desde: ${docsPath}`);
@@ -44,6 +45,8 @@ export const startCLI = async () => {
   });
 
   const devAssistantAgent = new DevAssistantAgent();
+  const rateLimiter = createRateLimiter();
+
   console.log("╔════════════════════════════════════════╗");
   console.log("║         DevAssistant v1.0              ║");
   console.log("║    Agente de Documentación y Código    ║");
@@ -125,10 +128,21 @@ export const startCLI = async () => {
       }
 
       try {
-        process.stdout.write(`\DevAssistantAgent: `);
-        const response = await devAssistantAgent.chat(userInput, (fragment) => {
-          process.stdout.write(fragment);
-        });
+        const guardrail = checkGuardrails(userInput, rateLimiter);
+        if (!guardrail.safe) {
+          console.log(`\n${guardrail.reason}`);
+          promptUser();
+          return;
+        }
+
+        const secureText = guardrail.sanitized;
+        process.stdout.write(`\nDevAssistantAgent: `);
+        const response = await devAssistantAgent.chat(
+          secureText,
+          (fragment) => {
+            process.stdout.write(fragment);
+          },
+        );
         process.stdout.write(`\n`);
         if (response.toolsUsed.length > 0) {
           const uniqueTools = [...new Set(response.toolsUsed)];
